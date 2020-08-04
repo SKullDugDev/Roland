@@ -45,4 +45,4 @@ async def campaignadd(ctx, usr_campgn_nm):
         cordlog.logger.exception("An exception occured in discord..")
         print(cursor)
 
-client.run('NzM4OTgyMDczNTUyODYzMjMy.XyT0rw.ueqVrly4dc7DkDNvWW0OZum5nI0')
+client.run(TOKEN)
