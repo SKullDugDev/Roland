@@ -1,0 +1,26 @@
+# instructions for Roland
+
+Title = "Roland Academy"
+
+[ConnectionSettings]
+DRIVER ='{ODBC Driver 17 for SQL Server}'
+SERVER = "MJÖLNIR"
+DATABASE = 'Roland'
+TRUSTED_CONNECTION = 'yes'
+
+
+[SQLVariables]
+ CHECK_IF_CAMPAIGN_NAME_IN_DATABASE = '''
+        SELECT
+            CampaignName
+        FROM
+            Campaign
+        WHERE
+            CampaignName Like ?'''
+
+INSERT_NEW_CAMPAIGN_NAME = '''
+    INSERT INTO
+        Campaign (CampaignName, DMName, PlayerOneName)
+    VALUES
+        (?, 'unknown_player','unknown_player') '''
+
