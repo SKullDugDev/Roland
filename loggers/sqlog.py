@@ -1,8 +1,11 @@
+# for paths
+import pathlib
+
+# for logging
 import logging
 
-
 # create log file
-LOG_FILE = "D:\\Dev\\Python\\Roland\\data\\logs\\sql logs\\sql.log"
+LOG_FILE = pathlib.Path.cwd() / 'data' / 'logs' / 'sql logs' / 'sql.log'
 
 # gets or creates a logger
 logger = logging.getLogger(__name__)
