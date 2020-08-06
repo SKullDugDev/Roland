@@ -1,16 +1,24 @@
+# for paths
+import pathlib
+
+# for configuration file
+import toml
+
+# main module & ext
 import discord
 from discord.ext import commands
+
+# connect to backend
 import RolandSQL
-import pyodbc
+
+# log errors
 import logging
+from pyodbc import DatabaseError
 import cordlog
 
-# connecting to Roland
-cnxn = pyodbc.connect('Driver={ODBC Driver 17 for SQL Server};'
-                      'Server=MJÖLNIR;'
-                      'Database=Roland;'
-                      'Trusted_Connection=yes;')
-cursor = cnxn.cursor()
+CONFIGURATION_FILE = pathlib.Path.cwd() / "data" / "configuration" / "token.toml"
+TOKEN = toml.loads(CONFIGURATION_FILE.read_text())
+TOKEN = TOKEN['TOKEN']
 
 # create Client connection
 client = discord.Client()
@@ -27,22 +35,22 @@ async def on_ready():
 
 
 @client.command()
-async def campaignadd(ctx, usr_campgn_nm):
-    chk_failed = RolandSQL.add_new_campgn_nm(usr_campgn_nm)
-    campgn_list = RolandSQL.old_campgn_nm_pull(usr_campgn_nm)
-    print(campgn_list)
-    print(chk_failed)
-    if chk_failed == True:
+async def campaignadd(ctx, user_campaign_name: str):
+    # connect to database
+    db = RolandSQL.SqlRunner()
+
+    # run new campaign name adding process and store in check_failed
+    check_failed = db.process_to_add_new_campaign_name(user_campaign_name)
+    if check_failed:
         await ctx.send('Campaign already exists!')
     else:
-        await ctx.send('Campaign added!')
-    RolandSQL.chk_new_campgn_add(usr_campgn_nm)
+        try:
+            db.check_campaign_name_before_committing(user_campaign_name)
+            await ctx.send('Campaign added!')
+        except DatabaseError:
+            cordlog.logger.exception("Commit Error Occurred...")
+        finally:
+            db.close()
 
-    try:
-        cursor = cnxn.cursor()
-        print(cursor)
-    except Exception as e:
-        cordlog.logger.exception("An exception occured in discord..")
-        print(cursor)
 
 client.run(TOKEN)
