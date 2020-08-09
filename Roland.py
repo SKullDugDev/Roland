@@ -5,27 +5,28 @@ import pathlib
 import toml
 
 # main module & ext
-import discord
 from discord.ext import commands
 
 # connect to backend
-import RolandSQL
+import RolandCampaignCommands
 
-# log errors
-import logging
-from pyodbc import DatabaseError
-import cordlog
+rc_commands = RolandCampaignCommands
+
+# typing hint
+from typing import NewType
+
+message = NewType('message', str)
+
+# config info
 
 CONFIGURATION_FILE = pathlib.Path.cwd() / "data" / "configuration" / "token.toml"
 TOKEN = toml.loads(CONFIGURATION_FILE.read_text())
 TOKEN = TOKEN['TOKEN']
 
-# create Client connection
-client = discord.Client()
-
 # set prefix
 bot_prefix = "!"
 
+# create Client connection
 client = commands.Bot(command_prefix=bot_prefix)
 
 
@@ -34,23 +35,32 @@ async def on_ready():
     print('We have logged in as {0.user}'.format(client))
 
 
+# add campaigns
 @client.command()
-async def campaignadd(ctx, user_campaign_name: str):
-    # connect to database
-    db = RolandSQL.SqlRunner()
+async def campaignadd(ctx, *new_campaigns_from_user) -> message:
+    campaign_added_message = rc_commands.campaignadd(ctx, new_campaigns_from_user)
+    return await ctx.send(campaign_added_message)
 
-    # run new campaign name adding process and store in check_failed
-    check_failed = db.process_to_add_new_campaign_name(user_campaign_name)
-    if check_failed:
-        await ctx.send('Campaign already exists!')
-    else:
-        try:
-            db.check_campaign_name_before_committing(user_campaign_name)
-            await ctx.send('Campaign added!')
-        except DatabaseError:
-            cordlog.logger.exception("Commit Error Occurred...")
-        finally:
-            db.close()
+
+# list campaigns
+@client.command()
+async def campaignlist(ctx) -> message:
+    campaign_list_string = rc_commands.campaignlist(ctx)
+    return await ctx.send(campaign_list_string)
+
+
+# remove campaigns
+@client.command()
+async def campaignremove(ctx, *campaigns_set_for_removal) -> message:
+    campaign_deletion_message = rc_commands.campaignremove(ctx, *campaigns_set_for_removal)
+    return await ctx.send(campaign_deletion_message)
+
+
+# clear campaigns
+@client.command()
+async def campaignclear(ctx) -> message:
+    campaign_clear_message = rc_commands.campaignclear(ctx)
+    return await ctx.send(campaign_clear_message)
 
 
 client.run(TOKEN)
